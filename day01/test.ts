@@ -1,10 +1,14 @@
 import { assertEquals } from "https://deno.land/std@0.166.0/testing/asserts.ts";
 import { main } from "./index.ts";
 
-Deno.test("Day 01 Test", () => {
-  const input = "abc";
-  const output = main(input);
+Deno.test("Day 01 Test", async () => {
+ const textInputTest = await Deno.readTextFile("./input_text_test.txt");
 
-  const case1 = "abc";
-  assertEquals(output, case1, `\nExpected: ${case1}\nReturned: ${output}`);
+  const processedString = main(textInputTest);
+
+  const largest = 24000;
+  const threeLargest = 45000;
+
+  assertEquals(processedString[0], largest);
+  assertEquals(processedString[1], threeLargest);
 });
