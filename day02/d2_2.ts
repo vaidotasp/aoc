@@ -1,13 +1,20 @@
 const textInput = await Deno.readTextFile("./input2.txt");
-console.log("init");
-console.log("reading input...");
-console.log("-------------------");
-// console.log(textInput);
 
-//split in rounds
-//
+//sanitization of inputs
+const rounds = textInput
+  .split("\n")
+  .filter((r) => r !== "")
+  .map((combo) => {
+    return combo
+      .trim()
+      .split(" ")
+      .filter((c) => c !== " ")
+      .join("");
+  });
 
-const shapeScores: any = {
+type Shapes = "rock" | "paper" | "scissors";
+
+const shapeScores: Record<Shapes, number> = {
   rock: 1,
   paper: 2,
   scissors: 3,
@@ -20,106 +27,54 @@ const outcomeScores = {
 };
 
 //encoding of shapes
-const firstCol: any = {
+const firstCol: Record<string, Shapes> = {
   A: "rock",
   B: "paper",
   C: "scissors",
 };
 
-//second column is how the rounds has to end!
-const secondCol: any = {
+//second column is how the rounds has to end
+const secondCol: Record<string, string> = {
   X: "lose",
   Y: "draw",
   Z: "win",
 };
 
-function findPlay(opponent: string, condition: string) {
-  //get condition
-  const con = secondCol[condition];
-  const opp = firstCol[opponent];
+const winCombos: Record<Shapes, Shapes> = {
+  rock: "scissors",
+  scissors: "paper",
+  paper: "rock",
+};
 
-  return { con, opp };
-}
-
-const roundsArr = textInput.split("\n").filter((r) => r !== "");
+//inverse winCombos
+const loseCombos: Record<Shapes, Shapes> = {
+  scissors: "rock",
+  paper: "scissors",
+  rock: "paper",
+};
 
 let totalScore = 0;
 
-for (let i = 0; i < roundsArr.length; i++) {
-  const roundCombo = roundsArr[i].split("").filter((r) => r !== " ");
-  const fC = roundCombo[0];
-  const sC = roundCombo[1];
-  console.log(fC, sC);
+for (let i = 0; i < rounds.length; i++) {
+  const roundCombo = rounds[i];
+  const opp = firstCol[roundCombo[0]];
+  const con = secondCol[roundCombo[1]];
+  console.log(opp, con);
 
-  const { con, opp } = findPlay(fC, sC);
-
-  console.log(con, opp);
   if (con === "draw") {
     //play same hand as opp
     totalScore += outcomeScores.draw;
     totalScore += shapeScores[opp];
   } else if (con === "win") {
-    //what is my hand to win this thing
-    if (opp === "rock") {
-      //wind against rock
-      totalScore += shapeScores.paper;
-    }
-    if (opp === "paper") {
-      //wind against rock
-      totalScore += shapeScores.scissors;
-    }
-    if (opp === "scissors") {
-      //wind against rock
-      totalScore += shapeScores.rock;
-    }
+    //we need to win
+    totalScore += shapeScores[loseCombos[opp]];
     totalScore += outcomeScores.win;
   } else if (con === "lose") {
-    //what is losing condition
-    if (opp === "rock") {
-      //wind against rock
-      totalScore += shapeScores.scissors;
-    }
-    if (opp === "paper") {
-      //wind against rock
-      totalScore += shapeScores.rock;
-    }
-    if (opp === "scissors") {
-      //wind against rock
-      totalScore += shapeScores.paper;
-    }
-
+    //we need to lose
+    totalScore += shapeScores[winCombos[opp]];
   }
-
-  //if (firstCol[fC] === 'rock' && secondCol[sC] === 'rock') {
-  //  // console.log('draw');
-  //  totalScore += outcomeScores.draw;
-  //} else if (firstCol[fC] === 'paper' && secondCol[sC] === 'paper'){
-  //  // console.log('draw');
-  //  totalScore += outcomeScores.draw;
-  //} else if (firstCol[fC] === 'scissors' && secondCol[sC] === 'scissors'){
-  //  // console.log('draw');
-  //  totalScore += outcomeScores.draw;
-  //// win conditions
-  //} else if (firstCol[fC] === 'rock' && secondCol[sC] === 'scissors'){
-  //  // console.log('loss');
-  //} else if (firstCol[fC] === 'scissors' && secondCol[sC] === 'paper'){
-  //  // console.log('loss');
-  //} else if (firstCol[fC] === 'paper' && secondCol[sC] === 'rock'){
-  //  // console.log('loss');
-  //} else {
-  ////win conditions
-  //  // console.log('win');
-  //  totalScore += outcomeScores.win;
-  //}
-
-  //round score for hand
-  // console.log(shapeScores[secondCol[sC]]);
-  // totalScore += shapeScores[secondCol[sC]];
-
-  //determine winning condition
-  //ok I got rock, what does rock win against
 }
 
-console.log("totalScore", totalScore);
-
-// console.log(roundsArr);
+console.log("totalScore -->", totalScore);
+console.log("totalScore should be -->", 12);
+console.log(totalScore === 12);
