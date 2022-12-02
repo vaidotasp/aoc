@@ -1,6 +1,8 @@
 const textInput = await Deno.readTextFile("./input1.txt");
 
-const shapeScores: any = {
+type Shapes = "rock" | "paper" | "scissors";
+
+const shapeScores: Record<Shapes, number> = {
   rock: 1,
   paper: 2,
   scissors: 3,
@@ -13,23 +15,23 @@ const outcomeScores = {
 };
 
 //encoding of shapes
-const firstCol: any = {
+const firstCol: Record<string, Shapes> = {
   A: "rock",
   B: "paper",
   C: "scissors",
 };
 
-const secondCol: any = {
+const secondCol: Record<string, Shapes> = {
   X: "rock",
   Y: "paper",
   Z: "scissors",
 };
 
-const winCombos = {
-  // rock: scissors,
-  // scissors: paper,
-  // paper: rock,
-}
+const winCombos: Record<Shapes, Shapes> = {
+  rock: "scissors",
+  scissors: "paper",
+  paper: "rock",
+};
 
 //sanitization of inputs
 const rounds = textInput
@@ -47,33 +49,23 @@ let totalScore = 0;
 
 for (let i = 0; i < rounds.length; i++) {
   const roundCombo = rounds[i];
-  const fC = roundCombo[0];
-  const sC = roundCombo[1];
-  console.log(fC, sC);
+  const opp = firstCol[roundCombo[0]];
+  const me = secondCol[roundCombo[1]];
 
-  if (firstCol[fC] === secondCol[sC]) {
-    console.log("draw");
+  if (opp === me) {
     totalScore += outcomeScores.draw;
-    // win conditions
-  } else if (firstCol[fC] === "rock" && secondCol[sC] === "scissors") {
-    console.log("loss");
-  } else if (firstCol[fC] === "scissors" && secondCol[sC] === "paper") {
-    console.log("loss");
-  } else if (firstCol[fC] === "paper" && secondCol[sC] === "rock") {
+    // check if opponent wins first, else we win
+  } else if (winCombos[opp] === me) {
     console.log("loss");
   } else {
-    //win conditions
     console.log("win");
     totalScore += outcomeScores.win;
   }
 
-  //round score for hand
-  console.log(shapeScores[secondCol[sC]]);
-  totalScore += shapeScores[secondCol[sC]];
+  //add score for hand
+  totalScore += shapeScores[me];
 }
 
-console.log("totalScore", totalScore);
-console.log("totalScore should be", 15);
+console.log("totalScore -->", totalScore);
+console.log("totalScore should be -->", 15);
 console.log(totalScore === 15);
-
-// console.log(roundsArr);
