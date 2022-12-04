@@ -1,6 +1,9 @@
 const textInput = await Deno.readTextFile("./input1.txt");
+
+// range fn helper
 const range = (start: number, stop: number, step: number) =>
 	Array.from({ length: (stop - start) / step + 1 }, (_, i) => start + i * step);
+
 //sanitization of inputs
 const sections = textInput.split("\n").filter((r) => r.length);
 
@@ -16,38 +19,31 @@ const sectionPairs = sections.map((s) =>
 		})
 );
 
+// check for all elements existing in the arr
+function checkForSymmetry(arr1: number[], arr2: number[]) {
+	return arr1.every((e) => arr2.includes(e));
+}
+
 let overlap = 0;
 
 for (let i = 0; i < sectionPairs.length; i++) {
-	const elfPair = sectionPairs[i];
 	const firstElf = sectionPairs[i][0];
 	const secondElf = sectionPairs[i][1];
 
-	console.log("process", elfPair);
 	//find the largest range instruction
 
 	if (firstElf.length > secondElf.length) {
 		//chances are first elf can overlap the second
 		// we are looking for all elements in the smaller array existing in the bigger one!
-		const tt = secondElf.every((e) => firstElf.includes(e));
-		console.log(tt);
-		if (tt) {
-			overlap += 1;
-		}
+		const overlapExist = checkForSymmetry(secondElf, firstElf);
+		overlap += Number(overlapExist);
 	} else if (firstElf.length < secondElf.length) {
-		// second range could overlap the first
-		const tt = firstElf.every((e) => secondElf.includes(e));
-		console.log(tt);
-		if (tt) {
-			overlap += 1;
-		}
+		const overlapExist = checkForSymmetry(firstElf, secondElf);
+		overlap += Number(overlapExist);
 	} else {
-		// do we even check same range? 2-3 and 2-3 for example?
-		const tt = firstElf.every((e) => secondElf.includes(e));
-		console.log(tt);
-		if (tt) {
-			overlap += 1;
-		}
+		//likely redundant
+		const overlapExist = checkForSymmetry(secondElf, firstElf);
+		overlap += Number(overlapExist);
 	}
 }
 
