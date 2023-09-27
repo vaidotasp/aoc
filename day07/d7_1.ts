@@ -1,153 +1,146 @@
 console.log(
 	"---------------------------PROGRAM BEGIN-------------------------"
 );
-const textInput = await Deno.readTextFile("./input2.txt");
-
+const textInput = await Deno.readTextFile("./input1.txt");
+// const textInput = await Deno.readTextFile("./input1.txt");
 const input = textInput.split("\n");
 
-class Entry {
+// $ signifies a command
+// cd changes the dir
+/*
+
+cd means change directory. This changes which directory is the current directory, but the specific result depends on the argument:
+cd x moves in one level: it looks in the current directory for the directory named x and makes it the current directory.
+cd .. moves out one level: it finds the directory that contains the current directory, then makes that directory the current directory.
+cd / switches the current directory to the outermost directory, /.
+ls means list. It prints out all of the files and directories immediately contained by the current directory:
+123 abc means that the current directory contains a file named abc with size 123.
+dir xyz means that the current directory contains a directory named xyz.
+
+
+determine the total size of each directory. The total size of a directory is the sum of the sizes of the files it contains, directly or indirectly.
+
+To begin, find all of the directories with a total size of at most 100000, then calculate the sum of their total sizes. In the example above, these directories are a and e; the sum of their total sizes is 95437 (94853 + 584). (As in this example, this process can count files more than once!)
+
+*/
+
+// command parser
+
+type FileNode = {
 	name: string;
 	size: number;
-	children: Entry[] | null;
-	constructor(name: string, size: number, children: Entry[] | null) {
-		this.name = name;
-		this.size = size;
-		this.children = children;
-	}
-}
+	parent: DirNode;
+	children: null;
+};
 
-class FileTree {
-	root: Entry;
+type DirNode = {
+	name: string;
+	size: number;
+	parent?: DirNode | null; //null only is useful for the root but whatever
+	children: Array<FileNode | DirNode>; // could be files or folders
+};
+
+type AnyNode = FileNode | DirNode;
+
+class FileSystem {
+	/*
+		This will hold a filesystem information. It will be literally a tree node which each node representing a file or a directory. File can have a size, name and a parent directory. Directory can have a size, other directories and files.
+
+		Likely best is linked list, question is if this should be single or double linked list. Double may be more flexible to look up parents and stuff.
+
+		Is it true though? every directory can have multiple files as children and children cannot have any children only parent nodes (dirs)
+
+		what about stack based implementation? I think that's possible but it seems more fun to do "tree" structure here
+
+		fileSystem root node will be the root dir "/"
+
+		every "dir" can have children (children can be other dirs),
+		every "file" cannot have any children only parents
+
+
+	*/
+
+	root: DirNode;
+	currentDirStack: string[];
+
 	constructor() {
-		this.root = new Entry("~", 0, []);
+		const root = {
+			name: "/",
+			size: 0,
+			children: [],
+		} as DirNode;
+
+		this.root = root;
+		this.currentDirStack = ["/"];
 	}
 
-	addEntry(entry: Entry, path: string) {
-		//find where to attach the entry based on parent dir? and full path?
-		// if we get the parent dir but within a tree we need to find the right one
-	}
-
-	getDirSizes() {
-		this.root;
-	}
-
-	//recursive step through entries that may have nested children and find me a nested child specified by name
-	traverse(node: Entry, name: string) {
-		if (node.name === name) {
-			return node;
+	updateStack(cmd: string | "..") {
+		if (cmd === "..") {
+			this.currentDirStack.pop();
+		} else {
+			this.currentDirStack.push(cmd);
 		}
-		if (node.children) {
-			node.children.forEach((c) => this.traverse(c, name));
+	}
+
+	// traverse the tree and find directory node given a name. What if dir names are not unique and we can have nested dir names that are duplicates? We need to know the stack context within which we are looking for it.
+	findDirNode(name: string, currentStack: string[]): DirNode | null {
+		// no matter what dir name we have, we always have to traverse to the deepest stack folder that has been passed. Then within that folder we should be checking if dir exists and do nothing if it does, or create a new one if such dir does not exist
+		const deepestCurrentDir = currentStack[currentStack.length - 1];
+		const stackDepth = currentStack.length;
+		console.log("deepest dir", deepestCurrentDir, stackDepth);
+		console.log("current stack", currentStack);
+		function traverse(curr: DirNode) {
+			console.log("traversing NODE name:", curr.name);
+			for (let i = 0; i < curr.children.length; i++) {
+				if (curr.children[i].children && stackDepth !== i) {
+					traverse(curr.children[i] as DirNode);
+					//current node has children (meaning it has nested files, keep going)
+					//
+				} else {
+					//
+					console.log("reached deepest stack");
+					break;
+				}
+			}
 		}
+
+		traverse(this.root); // start with root
 		return null;
 	}
 
-	findParentDir(path: string): Entry {
-		console.log("finddir", path);
-	}
+	process(line: string) {
+		const tokens = line.split(" ");
 
-	addEntries(lines: string[], pwd: string) {
-		console.log("adding lines to this PWD", pwd);
-		console.log(lines);
-		lines.forEach((l) => {
-			const line = l.split(" ");
-			let currNode = this.root;
-			const paths = pwd.split("/");
-			if (line[0] === "dir") {
-				console.log("dealing with dir [%s] in path: [%s]", line[1], pwd);
+		if (tokens[0] === "$" && tokens[1] === "cd") {
+			// cmd change dir, we need to either pop the stack or push the stack here
+			this.updateStack(tokens[2]);
+			return;
+		} else if (tokens[0] === "$" && tokens[1] === "ls") {
+			// list cmd, no stack updates
+		} else if (tokens[0] === "dir") {
+			// listing a directory, create if it does not exist, do nothing if it does
+			const dirName = tokens[1];
 
-				for (let i = 0; i < paths.length; i++) {
-					const isLast = i === paths.length - 1;
-					const foundNode = this.traverse(currNode, paths[i]);
-					if (foundNode && isLast) {
-						currNode = foundNode;
-					} else if (foundNode && !isLast) {
-						// currNode is at the root, but we need to go level deeper here
-						const nested = currNode?.children?.find(
-							(c) => c.name === paths[i + 1]
-						);
-						currNode = nested!;
-					} else {
-						// NOTE: we are assuming (which input suggest) that commands do not have misleading instructions like trying to cd into a dir that does not exist, so we are not handling such cases
-					}
-				}
-				const node = new Entry(line[1], 0, []);
-				currNode?.children?.push(node);
-			} else {
-				//dealing with the file part
-				console.log("processing file", line[1], line[0]);
-				for (let i = 0; i < paths.length; i++) {
-					const isLast = i === paths.length - 1;
-					const foundNode = this.traverse(currNode, paths[i]);
-					if (foundNode && isLast) {
-						currNode = foundNode;
-					} else if (foundNode && !isLast) {
-						// currNode is at the root, but we need to go level deeper here
-						const nested = currNode?.children?.find(
-							(c) => c.name === paths[i + 1]
-						);
-						currNode = nested!;
-					} else {
-						// NOTE: we are assuming (which input suggest) that commands do not have misleading instructions like trying to cd into a dir that does not exist, so we are not handling such cases
-					}
-				}
-				const node = new Entry(line[1], Number(line[0]), null);
-				currNode?.children?.push(node);
-			}
-		});
-	}
-}
-
-const ft = new FileTree();
-
-//
-let pwd = "~";
-for (let i = 0; i < input.length; i++) {
-	const cmd = input[i];
-
-	console.log(cmd, pwd);
-
-	if (cmd === "$ cd ..") {
-		if (pwd === "~") {
-			continue;
+			this.findDirNode(dirName, this.currentDirStack);
 		} else {
-			const curPath = pwd.split("/");
-			curPath.pop();
-			pwd = curPath.join("/");
-		}
-	} else if (cmd.includes("cd")) {
-		const dirName = cmd.split(" ")[2];
-		pwd += `/${dirName}`;
-	} else if (cmd === "$ ls") {
-		const fileFolderList: any = [];
-		for (let k = i + 1; k < input.length; k++) {
-			if (input[k] === "$ cd .." || input[k].split(" ")[1] === "cd") {
-				break;
-			}
-			fileFolderList.push(input[k]);
-			i = k;
+			// the only left line is file listing
+			const fileSize = Number(tokens[0]);
+			const fileName = tokens[1];
 		}
 
-		ft.addEntries(fileFolderList, pwd);
+		// what are we appending (dir or file?)
+		// do we need to traverse to a specific node to perform the operation? if so how do we know where we are and where we go. I think we keep the stack of the current dir somewhere outside of this append method, we can try to do it here too. no reason why we cant do so.
 	}
 }
 
-console.log(ft.getDirSizes());
+const fs = new FileSystem();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// ------------------ PARSING ------------------ //
+function parseCommands(rawInput: string[]) {
+	rawInput.forEach((line: string) => {
+		fs.process(line);
+	});
+}
+parseCommands(input);
+console.log("---------");
+// console.log(input);
