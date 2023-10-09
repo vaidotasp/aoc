@@ -1,7 +1,9 @@
 console.log(
 	"---------------------------PROGRAM BEGIN-------------------------"
 );
-const textInput = await Deno.readTextFile("./input1.txt");
+const textInput = await Deno.readTextFile(
+	"/Users/vp/code/aoc2022/day07/input1.txt"
+);
 // const textInput = await Deno.readTextFile("./input1.txt");
 const input = textInput.split("\n");
 
@@ -87,10 +89,10 @@ class FileSystem {
 		// no matter what dir name we have, we always have to traverse to the deepest stack folder that has been passed. Then within that folder we should be checking if dir exists and do nothing if it does, or create a new one if such dir does not exist
 		const deepestCurrentDir = currentStack[currentStack.length - 1];
 		const stackDepth = currentStack.length;
-		console.log("deepest dir", deepestCurrentDir, stackDepth);
-		console.log("current stack", currentStack);
+		// console.log("deepest dir", deepestCurrentDir, stackDepth);
+		// console.log("current stack", currentStack);
 		function traverse(curr: DirNode) {
-			console.log("traversing NODE name:", curr.name);
+			// console.log("traversing NODE name:", curr.name);
 			for (let i = 0; i < curr.children.length; i++) {
 				if (curr.children[i].children && stackDepth !== i) {
 					traverse(curr.children[i] as DirNode);
@@ -98,7 +100,7 @@ class FileSystem {
 					//
 				} else {
 					//
-					console.log("reached deepest stack");
+					// console.log("reached deepest stack");
 					break;
 				}
 			}
@@ -114,16 +116,18 @@ class FileSystem {
 		if (tokens[0] === "$" && tokens[1] === "cd") {
 			// cmd change dir, we need to either pop the stack or push the stack here
 			this.updateStack(tokens[2]);
+			// console.log(this.currentDirStack);
 			return;
 		} else if (tokens[0] === "$" && tokens[1] === "ls") {
-			// list cmd, no stack updates
+			// TODO: list cmd, no stack updates, do we even perform any action here? I dont think so.
 		} else if (tokens[0] === "dir") {
-			// listing a directory, create if it does not exist, do nothing if it does
+			// TODO: listing a directory, create if it does not exist, do nothing if it does
 			const dirName = tokens[1];
-
+			console.log(dirName);
+			debugger;
 			this.findDirNode(dirName, this.currentDirStack);
 		} else {
-			// the only left line is file listing
+			// the only left line is file listing, we should do the same -> create if it does not exist, do nothing if it does
 			const fileSize = Number(tokens[0]);
 			const fileName = tokens[1];
 		}
