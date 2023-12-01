@@ -22,18 +22,17 @@ function findCommonElementsAcrossArrays(list: string[][]): string[] {
 
   const commonUniqueElements = new Set();
 
-
   //transform array of arrays into sets maybe?
-  const listSet = list.map(l => {
-    console.log('processing..', l);
-    const tt = l.map(arr => new Set(arr))
+  const listSet = list.map((l) => {
+    console.log("processing..", l);
+    const tt = l.map((arr) => new Set(arr));
     return tt;
-  })
+  });
   console.log(listSet);
   // for (let i=0; i < list.length; i++) {
   //   const currArr = list[i];
   //   console.log('curr', currArr);
-    
+
   // }
   // go over each array and find repeating elements across all arrays
   return [];

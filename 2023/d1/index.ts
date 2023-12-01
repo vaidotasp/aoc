@@ -1,3 +1,3 @@
-const textInput = await Deno.readTextFile("input.txt");
+const textInput = await Deno.readTextFile("./2023/d1/input.txt");
 
-console.log(textInput)
+console.log(textInput);

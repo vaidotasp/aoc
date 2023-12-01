@@ -2,7 +2,7 @@ import { assertEquals } from "https://deno.land/std@0.166.0/testing/asserts.ts";
 import { main } from "./index.ts";
 
 Deno.test("Day 01 Test", async () => {
- const textInputTest = await Deno.readTextFile("./input_text_test.txt");
+  const textInputTest = await Deno.readTextFile("./input_text_test.txt");
 
   const processedString = main(textInputTest);
 

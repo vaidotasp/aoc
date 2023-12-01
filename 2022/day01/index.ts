@@ -30,4 +30,4 @@ export function main(input: string) {
 }
 
 const textInput = await Deno.readTextFile("./input_text_test.txt");
-const [largest, threeLargest] = main(textInput); 
+const [largest, threeLargest] = main(textInput);
