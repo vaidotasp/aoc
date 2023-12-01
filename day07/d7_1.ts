@@ -1,9 +1,9 @@
 console.log(
-	"---------------------------PROGRAM BEGIN-------------------------"
+  "---------------------------PROGRAM BEGIN-------------------------"
 );
-const textInput = await Deno.readTextFile(
-	"/Users/vp/code/aoc2022/day07/input1.txt"
-);
+const textInput = await Bun.file(
+  "/Users/vp/code/projects/aoc2022/day07/input1.txt"
+).text();
 // const textInput = await Deno.readTextFile("./input1.txt");
 const input = textInput.split("\n");
 
@@ -26,125 +26,100 @@ To begin, find all of the directories with a total size of at most 100000, then 
 
 */
 
-// command parser
-
-type FileNode = {
-	name: string;
-	size: number;
-	parent: DirNode;
-	children: null;
+type Node = {
+  name: string;
+  size: number;
+  children?: Node[];
 };
-
-type DirNode = {
-	name: string;
-	size: number;
-	parent?: DirNode | null; //null only is useful for the root but whatever
-	children: Array<FileNode | DirNode>; // could be files or folders
-};
-
-type AnyNode = FileNode | DirNode;
 
 class FileSystem {
-	/*
-		This will hold a filesystem information. It will be literally a tree node which each node representing a file or a directory. File can have a size, name and a parent directory. Directory can have a size, other directories and files.
+  root: Node;
+  currentDirStack: string[];
 
-		Likely best is linked list, question is if this should be single or double linked list. Double may be more flexible to look up parents and stuff.
+  constructor() {
 
-		Is it true though? every directory can have multiple files as children and children cannot have any children only parent nodes (dirs)
+    const root = {
+      name: "/",
+      size: 0,
+      children: []
+    }
+    this.root = root;
+    this.currentDirStack = ["/"];
+  }
 
-		what about stack based implementation? I think that's possible but it seems more fun to do "tree" structure here
+  updateStack(cmd: string | "..") {
+    if (cmd === "..") {
+      this.currentDirStack.pop();
+    } else {
+      this.currentDirStack.push(cmd);
+    }
+  }
 
-		fileSystem root node will be the root dir "/"
+  addDir(dirName: string) {
+    function traverse(node: Node, pathName: string): Node | null {
+      if (node.name === pathName) {
+        return node;
+      } else if (node.children) {
+``        const res = node.children.forEach(c => traverse(c, dirName));
+        if (res) {
+          return res
+        }
+      }
+      return null;
+    }
 
-		every "dir" can have children (children can be other dirs),
-		every "file" cannot have any children only parents
+    // let currentNode = this.root;
+    // for (let i = 0; i < this.currentDirStack.length; i++) {
+    //   const foundDirInPath = traverse(currentNode, this.currentDirStack[i]);
+    //   console.log(this.currentDirStack[i], foundDirInPath?.name);
+    //   const deepest = i === this.currentDirStack.length - 1;
+    //   debugger;
+    //   if (deepest && foundDirInPath) {
+    //     const child = foundDirInPath.children.find(c => c.name === dirName);
+    //     if (!child) {
+    //       const node = {
+    //         name: dirName,
+    //         size: 0,
+    //         children: []
+    //       };
+    //       foundDirInPath.children.push(node);
+    //       break;
+    //     }
+    //   } else {
+    //     currentNode = foundDirInPath
+    //     continue;
+    //   }
+    // }
+  }
 
-
-	*/
-
-	root: DirNode;
-	currentDirStack: string[];
-
-	constructor() {
-		const root = {
-			name: "/",
-			size: 0,
-			children: [],
-		} as DirNode;
-
-		this.root = root;
-		this.currentDirStack = ["/"];
-	}
-
-	updateStack(cmd: string | "..") {
-		if (cmd === "..") {
-			this.currentDirStack.pop();
-		} else {
-			this.currentDirStack.push(cmd);
-		}
-	}
-
-	// traverse the tree and find directory node given a name. What if dir names are not unique and we can have nested dir names that are duplicates? We need to know the stack context within which we are looking for it.
-	findDirNode(name: string, currentStack: string[]): DirNode | null {
-		// no matter what dir name we have, we always have to traverse to the deepest stack folder that has been passed. Then within that folder we should be checking if dir exists and do nothing if it does, or create a new one if such dir does not exist
-		const deepestCurrentDir = currentStack[currentStack.length - 1];
-		const stackDepth = currentStack.length;
-		// console.log("deepest dir", deepestCurrentDir, stackDepth);
-		// console.log("current stack", currentStack);
-		function traverse(curr: DirNode) {
-			// console.log("traversing NODE name:", curr.name);
-			for (let i = 0; i < curr.children.length; i++) {
-				if (curr.children[i].children && stackDepth !== i) {
-					traverse(curr.children[i] as DirNode);
-					//current node has children (meaning it has nested files, keep going)
-					//
-				} else {
-					//
-					// console.log("reached deepest stack");
-					break;
-				}
-			}
-		}
-
-		traverse(this.root); // start with root
-		return null;
-	}
-
-	process(line: string) {
-		const tokens = line.split(" ");
-
-		if (tokens[0] === "$" && tokens[1] === "cd") {
-			// cmd change dir, we need to either pop the stack or push the stack here
-			this.updateStack(tokens[2]);
-			// console.log(this.currentDirStack);
-			return;
-		} else if (tokens[0] === "$" && tokens[1] === "ls") {
-			// TODO: list cmd, no stack updates, do we even perform any action here? I dont think so.
-		} else if (tokens[0] === "dir") {
-			// TODO: listing a directory, create if it does not exist, do nothing if it does
-			const dirName = tokens[1];
-			console.log(dirName);
-			debugger;
-			this.findDirNode(dirName, this.currentDirStack);
-		} else {
-			// the only left line is file listing, we should do the same -> create if it does not exist, do nothing if it does
-			const fileSize = Number(tokens[0]);
-			const fileName = tokens[1];
-		}
-
-		// what are we appending (dir or file?)
-		// do we need to traverse to a specific node to perform the operation? if so how do we know where we are and where we go. I think we keep the stack of the current dir somewhere outside of this append method, we can try to do it here too. no reason why we cant do so.
-	}
+  process(line: string) {
+    const tokens = line.split(" ");
+    if (tokens[0] === "$" && tokens[1] === "cd") {
+      // cmd change dir, we need to either pop the stack or push the stack here
+      this.updateStack(tokens[2]);
+      return;
+    } else if (tokens[0] === "$" && tokens[1] === "ls") {
+      // TODO: list cmd, no stack updates, do we even perform any action here? I dont think so.
+    } else {
+      if (tokens[0] === "dir") {
+        this.addDir(tokens[1]);
+        // create directory with the name of tokens[1], if it does not exist in current path
+      } else {
+        // dealing with file tokens[0] size and tokens[1] name, create file if it does not exist in current path
+      }
+    }
+  }
 }
+
 
 const fs = new FileSystem();
 
 // ------------------ PARSING ------------------ //
 function parseCommands(rawInput: string[]) {
-	rawInput.forEach((line: string) => {
-		fs.process(line);
-	});
+  rawInput.slice(0, 10).forEach((line: string) => {
+    fs.process(line);
+  });
 }
 parseCommands(input);
-console.log("---------");
-// console.log(input);
+
+console.log(JSON.stringify(fs));
