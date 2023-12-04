@@ -11,7 +11,13 @@ if (width) {
 }
 console.log('size', size);
 
+type Coords = [number, number[]]
+type Numbers = Record<number, Coords>
+// Keep the hash table where value is a number that is found
+const numberMap: Numbers = {
+}
 
+// each row can have numbers, can be a single number, can be a large (multiple digit) number
 
 //traversal
 for (let i=0; i<lines.length; i++) {
