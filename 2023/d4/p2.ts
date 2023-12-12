@@ -1,12 +1,14 @@
-import { assert } from "https://deno.land/std@0.208.0/assert/assert.ts";
-
 const textInput = await Deno.readTextFile("./2023/d4/input.txt");
 console.log("------------ PROGRAM BEGIN ----------");
 const lines = textInput.split("\n");
 
 // we are interested in how many instances of each card we are left with at the very end
-
-const cardMap = new Map();
+type Card = {
+	instances: number;
+	winningNumbers: number;
+	name: number;
+};
+const cardMap = new Map<number, Card>();
 
 lines.forEach((line) => {
 	const cardName = Number(line.split(":")[0].slice(5));
@@ -37,7 +39,7 @@ lines.forEach((line) => {
 });
 
 for (let i = 1; i <= cardMap.size; i++) {
-	const card = cardMap.get(i);
+	const card = cardMap.get(i)!;
 	//for each card's winning number we go over and update the subsequent cards
 	for (let k = 0; k < card.instances; k++) {
 		for (let j = 0; j < card.winningNumbers && j <= cardMap.size; j++) {
@@ -49,9 +51,8 @@ for (let i = 1; i <= cardMap.size; i++) {
 	}
 }
 
-const res: number = cardMap.values().reduce((acc: unknown, val: unknown) => {
-	const v = val?.instances;
-	return acc + v;
+const res = Array.from(cardMap.values()).reduce((acc, val) => {
+	return acc + val.instances;
 }, 0);
 
 console.log(res);
